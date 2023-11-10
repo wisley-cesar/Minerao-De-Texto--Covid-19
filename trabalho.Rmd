@@ -1,0 +1,1200 @@
+---
+title: "Tendências Epidemiológicas da COVID-19 no Brasil: Impacto da Vacinação nos Casos e Óbitos por Estado"
+output: html_notebook
+---
+
+### Resumo:
+
+Este artigo científico tem como objetivo apresentar uma análise detalhada da base de dados "Coronavírus Brasil", uma fonte fundamental de informações sobre a pandemia da COVID-19 no Brasil. A base de dados é composta por uma ampla gama de informações epidemiológicas, incluindo casos confirmados, óbitos, datas de notificação, testes realizados e detalhes sobre a vacinação. Neste estudo, exploraremos a estrutura, o conteúdo e a relevância dessa base de dados para pesquisas científicas e análises de políticas públicas relacionadas à pandemia.
+
+**Funcionamento da Plataforma "Coronavírus Brasil":**
+
+A plataforma "Coronavírus Brasil" é uma iniciativa governamental que coleta, armazena e disponibiliza informações sobre a pandemia da COVID-19 no país. Ela é mantida pelo Ministério da Saúde e pode ser acessada por pesquisadores, profissionais de saúde e o público em geral. Os dados são atualizados regularmente para refletir a evolução da pandemia.
+
+Os dados relacionados à COVID-19 na plataforma "Coronavírus Brasil" são organizados em um formato tabular, que geralmente é representado em um arquivo CSV (Comma-Separated Values).
+
+No contexto deste estudo, a escolha da linguagem de programação R para a análise da base de dados "Coronavírus Brasil" é altamente apropriada e vantajosa. O R é uma linguagem e ambiente de programação estatística amplamente reconhecido e utilizado por cientistas de dados, estatísticos e pesquisadores em todo o mundo. Várias razões tornam o R uma escolha valiosa para análises científicas, especialmente em epidemiologia e saúde pública.
+
+Primeiramente, o R oferece um vasto ecossistema de pacotes e bibliotecas específicos para análise de dados e visualização, como o \`dplyr\` e o \`ggplot2\`, que simplificam o processo de manipulação e representação gráfica de dados. Essas ferramentas são particularmente úteis para lidar com dados tabulares, como os presentes na base "Coronavírus Brasil".
+
+A linguagem R também é conhecida por sua capacidade de produzir gráficos e visualizações de alta qualidade, essenciais para comunicar resultados e conclusões de forma clara e eficaz.
+
+No contexto deste estudo sobre a pandemia da COVID-19, o R permitirá a importação, limpeza, análise e visualização de dados de maneira eficiente e rigorosa, contribuindo para a obtenção de insights valiosos e para a tomada de decisões informadas. Sua capacidade de realizar análises estatísticas avançadas, modelagem e mineração de dados também o torna uma escolha poderosa para explorar a complexidade dos dados epidemiológicos.
+
+**Análise de Sentimentos:**
+
+A análise de sentimentos é uma técnica que permite avaliar as emoções e opiniões expressas em textos. Pode ser aplicada para entender como o público percebe a pandemia. Coletando dados de redes sociais, fóruns ou notícias relacionadas à COVID-19, podemos analisar o sentimento geral do público em relação à pandemia, identificar tendências de preocupação ou otimismo e até mesmo detectar desinformação.
+
+**Extração de Informação:**
+
+A extração de informações envolve a identificação e captura de informações específicas em textos não estruturados. Na base "Coronavírus Brasil", podemos aplicar essa técnica para extrair dados como números de casos, óbitos, datas de notificação e localizações geográficas dos relatórios, tornando as informações mais acessíveis e estruturadas para análise.
+
+**Agrupamento de Documentos:**
+
+Agrupamento de documentos é uma técnica que permite agrupar textos semelhantes em clusters. Isso pode ser útil para identificar padrões geográficos ou temporais na propagação da COVID-19. Ao agrupar relatórios por estado ou mês, podemos observar tendências regionais e sazonalidades nos dados.
+
+**Classificação de Texto:**
+
+A classificação de texto é usada para categorizar textos em classes predefinidas. Pode ser aplicada para identificar notícias ou relatórios de saúde pública que contenham informações imprecisas ou desatualizadas. Isso ajuda na detecção de informações errôneas que podem ser prejudiciais.
+
+**Descoberta de Associação:**
+
+A descoberta de associações busca encontrar padrões e relações ocultas entre itens em conjuntos de dados. Pode ser usada para identificar associações entre medidas de controle da pandemia, como lockdowns ou campanhas de vacinação, e a evolução dos casos de COVID-19 em diferentes estados.
+
+**Cancelamento de Esquemas:**
+
+O cancelamento de esquemas refere-se à identificação e eliminação de informações falsas ou desatualizadas na base de dados. Usando técnicas de mineração de texto, podemos verificar a veracidade de informações e marcar dados inconsistentes para posterior correção.
+
+Coletando os de 2020 da Pandemia no Brasil e mostrando os casos que aconteceram no pais no ano de 2020
+
+```{r}
+library(readxl)
+library(dplyr)
+library(ggplot2)
+
+setwd("/Users/wisle/Materias do 4 periodo/Mineracao de texto/Minereção De Texto - Jesmmer em R/Trabalho/")
+# vamos coletar os dados 
+
+# vamos manipular os dados agora 
+
+dados_covid_2020_1_semestre <- read.csv2("HIST_PAINEL_COVIDBR_2020_Parte1_03out2023.csv")
+# formatando as data do primeiro bimestre 
+dados_covid_2020_1_semestre$data <- as.Date(dados_covid_2020_1_semestre$data, format = "%d/%m/%y")
+
+# formatando as data do segundo bimestre 
+dados_covid_2020_2_semestre <-read.csv2("HIST_PAINEL_COVIDBR_2020_Parte2_03out2023.csv")
+dados_covid_2020_2_semestre$data <- as.Date(dados_covid_2020_2_semestre$data, format = "%Y-%m-%d")
+
+
+# juntado os dois bimestre 
+dados_covid_2020 <-bind_rows(dados_covid_2020_1_semestre,dados_covid_2020_2_semestre)
+
+# colocando os dados que estão fazio como NA para facilitar a analise dos dados
+dados_covid_2020$municipio[dados_covid_2020$municipio == ""] <- NA
+
+dados_covid_2020$nomeRegiaoSaude[dados_covid_2020$nomeRegiaoSaude == ""] <- NA
+
+dados_covid_2020$estado[dados_covid_2020$estado == ""] <- NA
+#pegando os dados so do Brasil 
+covid.Brasil <- filter(dados_covid_2020, is.na(municipio) & is.na(codmun) & is.na(estado))
+
+
+```
+
+Mostrando os dados dos estados do Brasil
+
+```{r}
+# pegando os dados de todos os estados 
+covid.estados <- filter(dados_covid_2020, is.na(municipio) & is.na(codmun) & !is.na(estado))
+```
+
+Analisando todos os estado separadamente
+
+Estado do Acre
+
+```{r}
+# Carregue as bibliotecas necessárias
+
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+# Filtre os dados para o estado do Acre e renomeie as colunas
+covid_ac_2020 <- covid.estados %>%
+  filter(estado == "AC") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ac_2020 <- covid_ac_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ac_resumo <- covid_ac_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ac_resumo, casosNovos, "Casos Novos de COVID-19 no Acre por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ac_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Acre por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+
+
+```
+Estado do Alagoas
+```{r}
+
+
+# Filtre os dados para o estado de Alagoas e renomeie as colunas
+covid_al_2020 <- covid.estados %>%
+  filter(estado == "AL") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_al_2020 <- covid_al_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_al_resumo <- covid_al_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_al_resumo, casosNovos, "Casos Novos de COVID-19 em Alagoas por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_al_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Alagoas por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Amazonas
+```{r}
+
+# Filtre os dados para o estado do Amazonas e renomeie as colunas
+covid_am_2020 <- covid.estados %>%
+  filter(estado == "AM") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_am_2020 <- covid_am_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_am_resumo <- covid_am_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_am_resumo, casosNovos, "Casos Novos de COVID-19 no Amazonas por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_am_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Amazonas por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Amapá
+```{r}
+
+# Filtre os dados para o estado do Amapá e renomeie as colunas
+covid_ap_2020 <- covid.estados %>%
+  filter(estado == "AP") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ap_2020 <- covid_ap_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ap_resumo <- covid_ap_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ap_resumo, casosNovos, "Casos Novos de COVID-19 no Amapá por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ap_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Amapá por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Bahia
+```{r}
+#Bahia
+
+# Filtre os dados para o estado da Bahia e renomeie as colunas
+covid_ba_2020 <- covid.estados %>%
+  filter(estado == "BA") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ba_2020 <- covid_ba_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ba_resumo <- covid_ba_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ba_resumo, casosNovos, "Casos Novos de COVID-19 na Bahia por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ba_resumo, obitosNovos, "Óbitos Novos de COVID-19 na Bahia por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Ceará
+```{r}
+
+
+# Filtre os dados para o estado do Ceará e renomeie as colunas
+covid_ce_2020 <- covid.estados %>%
+  filter(estado == "CE") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ce_2020 <- covid_ce_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ce_resumo <- covid_ce_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ce_resumo, casosNovos, "Casos Novos de COVID-19 no Ceará por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ce_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Ceará por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Distrito Federal
+
+```{r}
+
+# Filtre os dados para o Distrito Federal e renomeie as colunas
+covid_df_2020 <- covid.estados %>%
+  filter(estado == "DF") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_df_2020 <- covid_df_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_df_resumo <- covid_df_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_df_resumo, casosNovos, "Casos Novos de COVID-19 no Distrito Federal por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_df_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Distrito Federal por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Espírito Santo
+```{r}
+#Espírito Santo
+# Filtre os dados para o estado do Espírito Santo e renomeie as colunas
+covid_es_2020 <- covid.estados %>%
+  filter(estado == "ES") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_es_2020 <- covid_es_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_es_resumo <- covid_es_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_es_resumo, casosNovos, "Casos Novos de COVID-19 no Espírito Santo por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_es_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Espírito Santo por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+```
+
+Estado do Goiás
+
+```{r}
+# Filtre os dados para o estado de Goiás e renomeie as colunas
+covid_go_2020 <- covid.estados %>%
+  filter(estado == "GO") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_go_2020 <- covid_go_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_go_resumo <- covid_go_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_go_resumo, casosNovos, "Casos Novos de COVID-19 em Goiás por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_go_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Goiás por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+```
+
+Estado do Maranhão
+
+```{r}
+#Maranhão
+# Filtre os dados para o estado do Maranhão e renomeie as colunas
+covid_ma_2020 <- covid.estados %>%
+  filter(estado == "MA") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ma_2020 <- covid_ma_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ma_resumo <- covid_ma_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ma_resumo, casosNovos, "Casos Novos de COVID-19 no Maranhão por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ma_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Maranhão por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+```
+
+Estado do Minas Gerais
+
+
+```{r}
+#Minas Gerais
+# Crie colunas para o ano e o mês
+covid_ma_2020 <- covid_ma_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ma_resumo <- covid_ma_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ma_resumo, casosNovos, "Casos Novos de COVID-19 no Maranhão por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ma_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Maranhão por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+```
+
+Estado do Mato Grosso do Sul
+
+```{r}
+# Filtre os dados para o estado de Mato Grosso do Sul e renomeie as colunas
+covid_ms_2020 <- covid.estados %>%
+  filter(estado == "MS") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ms_2020 <- covid_ms_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ms_resumo <- covid_ms_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ms_resumo, casosNovos, "Casos Novos de COVID-19 em Mato Grosso do Sul por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ms_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Mato Grosso do Sul por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Mato Grosso
+
+```{r}
+#Mato Grosso 
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Mato Grosso e renomeie as colunas
+covid_mt_2020 <- covid.estados %>%
+  filter(estado == "MT") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_mt_2020 <- covid_mt_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_mt_resumo <- covid_mt_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_mt_resumo, casosNovos, "Casos Novos de COVID-19 em Mato Grosso por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_mt_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Mato Grosso por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Pará
+
+
+```{r}
+#Pará
+# Filtre os dados para o estado do Pará e renomeie as colunas
+covid_pa_2020 <- covid.estados %>%
+  filter(estado == "PA") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_pa_2020 <- covid_pa_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_pa_resumo <- covid_pa_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_pa_resumo, casosNovos, "Casos Novos de COVID-19 no Pará por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_pa_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Pará por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+
+```
+
+Estado do Paraíba
+
+```{r}
+#Paraíba
+covid_pb_2020 <- filter(covid.estados, estado == "PB")
+head(covid_pb_2020)
+
+```
+
+Estado do Pernambuco
+
+
+```{r}
+# Pernambuco
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Pernambuco e renomeie as colunas
+covid_pe_2020 <- covid.estados %>%
+  filter(estado == "PE") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_pe_2020 <- covid_pe_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_pe_resumo <- covid_pe_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_pe_resumo, casosNovos, "Casos Novos de COVID-19 em Pernambuco por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_pe_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Pernambuco por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+
+```
+
+Estado do Piauí
+
+
+```{r}
+#Piauí 
+# Filtre os dados para o estado do Piauí e renomeie as colunas
+covid_pi_2020 <- covid.estados %>%
+  filter(estado == "PI") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_pi_2020 <- covid_pi_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_pi_resumo <- covid_pi_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_pi_resumo, casosNovos, "Casos Novos de COVID-19 no Piauí por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_pi_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Piauí por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+```
+
+Estado do Paraná
+
+```{r}
+#Paraná
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado do Paraná e renomeie as colunas
+covid_pr_2020 <- covid.estados %>%
+  filter(estado == "PR") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_pr_2020 <- covid_pr_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_pr_resumo <- covid_pr_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_pr_resumo, casosNovos, "Casos Novos de COVID-19 no Paraná por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_pr_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Paraná por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Rio de Janeiro
+ 
+```{r}
+# Rio De Janeiro 
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado do Rio de Janeiro e renomeie as colunas
+covid_rj_2020 <- covid.estados %>%
+  filter(estado == "RJ") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_rj_2020 <- covid_rj_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_rj_resumo <- covid_rj_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_rj_resumo, casosNovos, "Casos Novos de COVID-19 no Rio de Janeiro por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_rj_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Rio de Janeiro por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+
+```
+
+Estado do Rio Grande do Norte
+
+```{r}
+#Rio Grande Do Norte
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado do Rio Grande do Norte e renomeie as colunas
+covid_rn_2020 <- covid.estados %>%
+  filter(estado == "RN") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_rn_2020 <- covid_rn_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_rn_resumo <- covid_rn_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_rn_resumo, casosNovos, "Casos Novos de COVID-19 no Rio Grande do Norte por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_rn_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Rio Grande do Norte por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Rondônia
+
+```{r}
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Rondônia e renomeie as colunas
+covid_ro_2020 <- covid.estados %>%
+  filter(estado == "RO") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_ro_2020 <- covid_ro_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_ro_resumo <- covid_ro_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_ro_resumo, casosNovos, "Casos Novos de COVID-19 em Rondônia por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_ro_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Rondônia por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+
+```
+
+Estado do Roraima
+
+
+```{r}
+#Roriama
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Roraima e renomeie as colunas
+covid_rr_2020 <- covid.estados %>%
+  filter(estado == "RR") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_rr_2020 <- covid_rr_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_rr_resumo <- covid_rr_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_rr_resumo, casosNovos, "Casos Novos de COVID-19 em Roraima por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_rr_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Roraima por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Rio Grande do Sul
+
+```{r}
+#Rio Grande Do Sul
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado do Rio Grande do Sul e renomeie as colunas
+covid_rs_2020 <- covid.estados %>%
+  filter(estado == "RS") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_rs_2020 <- covid_rs_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_rs_resumo <- covid_rs_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_rs_resumo, casosNovos, "Casos Novos de COVID-19 no Rio Grande do Sul por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_rs_resumo, obitosNovos, "Óbitos Novos de COVID-19 no Rio Grande do Sul por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Santa Catarina
+
+```{r}
+#Santa Catarina
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Santa Catarina e renomeie as colunas
+covid_sc_2020 <- covid.estados %>%
+  filter(estado == "SC") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_sc_2020 <- covid_sc_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_sc_resumo <- covid_sc_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_sc_resumo, casosNovos, "Casos Novos de COVID-19 em Santa Catarina por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_sc_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Santa Catarina por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do Sergipe
+
+```{r}
+# Sergipe
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Sergipe e renomeie as colunas
+covid_se_2020 <- covid.estados %>%
+  filter(estado == "SE") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_se_2020 <- covid_se_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_se_resumo <- covid_se_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_se_resumo, casosNovos, "Casos Novos de COVID-19 em Sergipe por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_se_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Sergipe por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+Estado do São Paulo
+
+```{r}
+# São Paulo 
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de São Paulo e renomeie as colunas
+covid_sp_2020 <- covid.estados %>%
+  filter(estado == "SP") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_sp_2020 <- covid_sp_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_sp_resumo <- covid_sp_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_sp_resumo, casosNovos, "Casos Novos de COVID-19 em São Paulo por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_sp_resumo, obitosNovos, "Óbitos Novos de COVID-19 em São Paulo por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+
+Estado do Tocantins
+
+```{r}
+#Tocantins
+# Carregue as bibliotecas necessárias
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+
+# Filtre os dados para o estado de Tocantins e renomeie as colunas
+covid_to_2020 <- covid.estados %>%
+  filter(estado == "TO") %>%
+  select(data, casosNovos, obitosNovos) %>%
+  mutate(data = as.Date(data, format="%Y-%m-%d"))
+
+# Crie colunas para o ano e o mês
+covid_to_2020 <- covid_to_2020 %>%
+  mutate(ano = lubridate::year(data),
+         mes = lubridate::month(data))
+
+# Agrupe por ano e mês e calcule os casos e óbitos novos
+covid_to_resumo <- covid_to_2020 %>%
+  group_by(ano, mes) %>%
+  summarise(casosNovos = sum(casosNovos),
+            obitosNovos = sum(obitosNovos), .groups = 'drop_last')
+
+# Função para criar gráficos
+criar_grafico <- function(data, y, titulo, ylab) {
+  ggplot(data, aes(x = factor(mes), y = {{y}}, fill = factor(ano))) +
+    geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.5) +
+    labs(title = titulo,
+         x = "Mês",
+         y = ylab) +
+    theme_minimal()
+}
+
+# Crie gráficos
+grafico_casos <- criar_grafico(covid_to_resumo, casosNovos, "Casos Novos de COVID-19 em Tocantins por Mês", "Casos Novos")
+grafico_obitos <- criar_grafico(covid_to_resumo, obitosNovos, "Óbitos Novos de COVID-19 em Tocantins por Mês", "Óbitos Novos")
+
+# Exiba ambos os gráficos lado a lado
+grid.arrange(grafico_casos, grafico_obitos, ncol = 1)
+
+```
+
+
