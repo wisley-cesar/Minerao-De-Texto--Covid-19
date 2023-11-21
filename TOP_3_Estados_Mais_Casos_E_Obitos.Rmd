@@ -1,0 +1,123 @@
+---
+title: "Indetificando Os estados com mais vitimas"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(ggplot2)
+# Criar um vetor para armazenar os totais de casos novos
+casos_novos <- c(
+  sum(covid_ac_resumo$casosNovos),
+  sum(covid_al_resumo$casosNovos),
+  sum(covid_am_resumo$casosNovos),
+  sum(covid_ap_resumo$casosNovos),
+  sum(covid_ba_resumo$casosNovos),
+  sum(covid_ce_resumo$casosNovos),
+  sum(covid_df_resumo$casosNovos),
+  sum(covid_es_resumo$casosNovos),
+  sum(covid_go_resumo$casosNovos),
+  sum(covid_ma_resumo$casosNovos),
+  sum(covid_ms_resumo$casosNovos),
+  sum(covid_mt_resumo$casosNovos),
+  sum(covid_pa_resumo$casosNovos),
+  sum(covid_pb_resumo$casosNovos),
+  sum(covid_pe_resumo$casosNovos),
+  sum(covid_pi_resumo$casosNovos),
+  sum(covid_pr_resumo$casosNovos),
+  sum(covid_rj_resumo$casosNovos),
+  sum(covid_rn_resumo$casosNovos),
+  sum(covid_rs_resumo$casosNovos),
+  sum(covid_ro_resumo$casosNovos),
+  sum(covid_rr_resumo$casosNovos),
+  sum(covid_sc_resumo$casosNovos),
+  sum(covid_sp_resumo$casosNovos),
+  sum(covid_se_resumo$casosNovos),
+  sum(covid_to_resumo$casosNovos)
+)
+
+# Criar um dataframe com os estados e os casos novos
+dados_casos_novos <- data.frame(
+  Estado = c("Acre", "Alagoas", "Amazonas", "Amapá", "Bahia", "Ceará", "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão",
+             "Mato Grosso do Sul", "Mato Grosso", "Pará", "Paraíba", "Pernambuco", "Piauí", "Paraná", "Rio de Janeiro", "Rio Grande do Norte",
+             "Rio Grande do Sul", "Rondônia", "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"),
+  CasosNovos = casos_novos
+)
+
+# Classificar o dataframe pelos casos novos em ordem decrescente
+dados_casos_novos_ordenados <- dados_casos_novos[order(-dados_casos_novos$CasosNovos), ]
+
+# Criar um gráfico de barras para os 3 estados com mais casos novos
+ggplot(dados_casos_novos_ordenados[1:3, ], aes(x = Estado, y = CasosNovos)) +
+  geom_bar(stat = "identity", fill = "skyblue", alpha = 0.7) +
+  labs(title = "Três Estados com Mais Casos Em 2020",
+       x = "Estado",
+       y = "Casos ") +
+  theme_minimal()
+# Exibir os 3 estados com mais casos novos
+print(dados_casos_novos_ordenados[1:3, c("Estado", "CasosNovos")])
+
+
+# Criar um vetor para armazenar os totais de óbitos novos
+obitos_novos <- c(
+  sum(covid_ac_resumo$obitosNovos),
+  sum(covid_al_resumo$obitosNovos),
+  sum(covid_am_resumo$obitosNovos),
+  sum(covid_ap_resumo$obitosNovos),
+  sum(covid_ba_resumo$obitosNovos),
+  sum(covid_ce_resumo$obitosNovos),
+  sum(covid_df_resumo$obitosNovos),
+  sum(covid_es_resumo$obitosNovos),
+  sum(covid_go_resumo$obitosNovos),
+  sum(covid_ma_resumo$obitosNovos),
+  sum(covid_ms_resumo$obitosNovos),
+  sum(covid_mt_resumo$obitosNovos),
+  sum(covid_pa_resumo$obitosNovos),
+  sum(covid_pb_resumo$obitosNovos),
+  sum(covid_pe_resumo$obitosNovos),
+  sum(covid_pi_resumo$obitosNovos),
+  sum(covid_pr_resumo$obitosNovos),
+  sum(covid_rj_resumo$obitosNovos),
+  sum(covid_rn_resumo$obitosNovos),
+  sum(covid_rs_resumo$obitosNovos),
+  sum(covid_ro_resumo$obitosNovos),
+  sum(covid_rr_resumo$obitosNovos),
+  sum(covid_sc_resumo$obitosNovos),
+  sum(covid_sp_resumo$obitosNovos),
+  sum(covid_se_resumo$obitosNovos),
+  sum(covid_to_resumo$obitosNovos)
+)
+
+# Criar um dataframe com os estados e os óbitos novos
+dados_obitos_novos <- data.frame(
+  Estado = c("Acre", "Alagoas", "Amazonas", "Amapá", "Bahia", "Ceará", "Distrito Federal", "Espírito Santo", "Goiás", "Maranhão",
+             "Mato Grosso do Sul", "Mato Grosso", "Pará", "Paraíba", "Pernambuco", "Piauí", "Paraná", "Rio de Janeiro", "Rio Grande do Norte",
+             "Rio Grande do Sul", "Rondônia", "Roraima", "Santa Catarina", "São Paulo", "Sergipe", "Tocantins"),
+  ObitosNovos = obitos_novos
+)
+
+# Classificar o dataframe pelos óbitos novos em ordem decrescente
+dados_obitos_novos_ordenados <- dados_obitos_novos[order(-dados_obitos_novos$ObitosNovos), ]
+
+
+# Criar um gráfico de barras para os 3 estados com mais óbitos novos
+ggplot(dados_obitos_novos_ordenados[1:3, ], aes(x = Estado, y = ObitosNovos)) +
+  geom_bar(stat = "identity", fill = "salmon", alpha = 0.7) +
+  labs(title = "Três Estados com Mais Óbitos  Em 2020",
+       x = "Estado",
+       y = "Óbitos ") +
+  theme_minimal()
+
+# Exibir os 3 estados com mais óbitos novos
+print(dados_obitos_novos_ordenados[1:3, c("Estado", "ObitosNovos")])
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
