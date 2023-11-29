@@ -52,7 +52,8 @@ library(readxl)
 library(dplyr)
 library(ggplot2)
 
-setwd("/Users/wisle/Materias do 4 periodo/Mineracao de texto/Minereção De Texto - Jesmmer em R/Trabalho/")
+#setando o nosso repositorio 
+setwd("/Users/wisley/Documents/Matéria do 4 periodo /Minereção de Texto /Trabalho Final /Minerao-De-Texto--Covid-19")
 # vamos coletar os dados 
 
 # vamos manipular os dados agora 
