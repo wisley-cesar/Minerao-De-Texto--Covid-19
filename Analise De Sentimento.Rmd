@@ -8,8 +8,8 @@ output: html_notebook
 
 library(rvest)
 library(sentimentr)
-library(stringr)
 library(tm)
+library(dplyr)
 
 # Lista de stopwords em português
 stopwords_pt <- c("de", "a", "o", "que", "e", "é", "do", "da", "em", "um", "para", "com", "não", "uma", "os", "no", "se", "na", "por", "mais", "as", "dos", "como", "mas", "ao", "ele", "das", "à", "seu", "sua", "ou", "quando", "muito", "nos", "já", "eu", "também", "só", "pelo", "pela", "até", "isso", "ela", "entre", "depois", "sem", "mesmo", "aos", "seus", "quem", "nas", "me", "esse", "eles", "você", "essa", "num", "nem", "suas", "meu", "às", "minha", "numa", "pelos", "elas", "qual", "nós", "lhe", "deles", "essas", "esses", "pelas", "este", "dele", "tu", "te", "vocês", "vos", "lhes", "meus", "minhas", "teu", "tua", "teus", "tuas", "nosso", "nossa", "nossos", "nossas", "dela", "delas", "esta", "estes", "estas", "aquele", "aquela", "aqueles", "aquelas", "isto", "aquilo", "estou", "está", "estamos", "estão", "estive", "esteve", "estivemos", "estiveram", "estava", "estávamos", "estavam", "estivera", "estivéramos", "esteja", "estejamos", "estejam", "estivesse", "estivéssemos", "estivessem", "estiver", "estivermos", "estiverem", "hei", "há", "havemos", "hão", "houve", "houvemos", "houveram", "houvera", "houvéramos", "haja", "hajamos", "hajam", "houvesse", "houvéssemos", "houvessem", "houver", "houvermos", "houverem", "houverei", "houverá", "houveremos", "houverão", "houveria", "houveríamos", "houveriam", "sou", "somos", "são", "era", "éramos", "eram", "fui", "foi", "fomos", "foram", "fora", "fôramos", "seja", "sejamos", "sejam", "fosse", "fôssemos", "fossem", "for", "formos", "forem", "serei", "será", "seremos", "serão", "seria", "seríamos", "seriam", "tenho", "tem", "temos", "tém", "tinha", "tínhamos", "tinham", "tive", "teve", "tivemos", "tiveram", "tivera", "tivéramos", "tenha", "tenhamos", "tenham", "tivesse", "tivéssemos", "tivessem", "tiver", "tivermos", "tiverem", "faz")
@@ -41,60 +41,21 @@ stopwords_personalizadas <- c(
 # Função para limpar o texto
 limpar_texto <- function(texto) {
   # Remove caracteres especiais, pontuações, números e converte para minúsculas
-  texto_limpo <- str_replace_all(texto, "[^[:alnum:][:space:]]", "")
-  texto_limpo <- tolower(texto_limpo)
+  texto_limpo <- str_to_lower(str_replace_all(texto, "[^[:alnum:][:space:]]", ""))
+  texto_limpo <- str_squish(texto_limpo)  # Remover espaços extras
   
   return(texto_limpo)
 }
 
 # Função para remover stopwords
-remover_stopwords <- function(tokens, stopwords, palavras_a_remover) {
-  # Remove as palavras específicas do seu domínio
-  tokens <- tokens[!tokens %in% palavras_a_remover]
-  
-  # Remove as stopwords padrão e personalizadas
-  tokens_sem_stopwords <- tokens[!tokens %in% c(stopwords, stopwords_personalizadas)]
-  
-  return(tokens_sem_stopwords)
+remover_stopwords <- function(tokens, stopwords) {
+  # Remove as stopwords
+  tokens_filtrados <- setdiff(tokens, stopwords)
+  return(tokens_filtrados)
 }
 
-# Função de pré-processamento
-pre_processamento <- function(corpus, stopwords, palavras_a_remover) {
-  for (i in seq_along(corpus)) {
-    texto <- as.character(corpus[[i]])
-    
-    # Limpar texto
-    texto_limpo <- limpar_texto(texto)
-    
-    # Se pelo menos uma palavra permanecer após o pré-processamento, atualizar o documento
-    if (nchar(texto_limpo) > 0) {
-      corpus[[i]] <- Corpus(VectorSource(texto_limpo))
-    }
-  }
-  
-  return(corpus)
-}
-
-# Função para análise de sentimento por parágrafo
-analisar_sentimento <- function(texto, language = "portuguese") {
-  # Verificar se o texto está vazio
-  if (is.null(texto) || texto == "" || nchar(trimws(texto)) == 0) {
-    return("Nenhum sentimento (Texto vazio)")
-  }
-  
-  # Calcula o sentimento usando a biblioteca sentimentr
-  sentimento <- sentiment_by(texto, language = language)$ave_sentiment
-  
-  # Retorna o rótulo de sentimento
-  if (sentimento >= 0) {
-    return("Positivo")
-  } else {
-    return("Negativo")
-  }
-}
-
-# Função para extrair textos de uma URL
-extrair_textos_webscraping <- function(url) {
+# Função para extrair textos de uma URL que mencionam a cloroquina e covid
+extrair_textos_cloroquina <- function(url) {
   # Faz o pedido HTTP para a página
   resposta <- read_html(url)
 
@@ -103,22 +64,36 @@ extrair_textos_webscraping <- function(url) {
     # Encontra todos os elementos de texto informativo (por exemplo, parágrafos)
     textos_informativos <- html_nodes(resposta, "p")
 
-    # Extrai, limpa e armazena os textos
-    textos <- character(0)
-
-    for (texto in textos_informativos) {
+    # Extrai, limpa e armazena todos os textos
+    textos_todos <- sapply(textos_informativos, function(texto) {
       texto_limpo <- limpar_texto(html_text(texto))
-      textos <- c(textos, texto_limpo)
-    }
-
-    return(textos)
+      return(texto_limpo)
+    })
+    
+    return(textos_todos)
   } else {
     cat("Falha ao acessar a página. A resposta não contém conteúdo.\n")
     return(NULL)
   }
 }
 
-# Lista de URLs que você deseja raspar
+
+
+# Função para análise de sentimento em relação à covid
+analisar_sentimento_covid <- function(texto) {
+  # Realiza a análise de sentimento
+  sentimento <- sentiment(texto)
+
+  # Verifica se a palavra "covid" está presente na frase
+  if ("covid" %in% str_split(texto, " ")[[1]]) {
+    rotulo <- "Positivo"
+  } else {
+    rotulo <- "Negativo"
+  }
+
+  return(rotulo)
+}
+# Lista de URLs para análise
 urls <- c(
   "https://diplomatique.org.br/do-bolsodoria-ao-bolsonarovirus-o-discurso-de-joao-doria/",
   "https://agenciamural.org.br/panorama-da-covid-19-na-grande-sao-paulo/",
@@ -132,38 +107,29 @@ urls <- c(
   "https://www.brasildefato.com.br/2020/07/09/vitimas-da-flexibilizacao-relatos-de-quem-contraiu-covid-na-volta-ao-trabalho-em-sp"
 )
 
-# Inicializa um vetor vazio para armazenar todos os textos
-todos_textos <- character(0)
 
 # Itera sobre a lista de URLs e aplica o web scraping para cada uma delas
-for (url in urls) {
-  textos_pagina <- extrair_textos_webscraping(url)
-  if (!is.null(textos_pagina)) {
-    todos_textos <- c(todos_textos, textos_pagina)
-  }
-}
+todos_textos <- urls %>%
+  lapply(extrair_textos_cloroquina) %>%
+  unlist()
 
-# Criar um vetor para armazenar os rótulos de sentimento
-rotulos_sentimento <- character(0)
+# Filtra apenas as frases que mencionam "covid"
+textos_covid <- todos_textos[grep("covid", todos_textos, ignore.case = TRUE)]
 
-# Itera sobre todos os textos e calcula o sentimento
-for (texto in todos_textos) {
-  rotulo <- analisar_sentimento(texto)
-  rotulos_sentimento <- c(rotulos_sentimento, rotulo)
-}
+# Criar um vetor para armazenar os rótulos de sentimento em relação à covid
+rotulos_sentimento_covid <- sapply(textos_covid, analisar_sentimento_covid)
 
-# Criar um data frame com os
+# Criar um data frame com os resultados em relação à covid
+dados_sentimento_covid <- data.frame(Frase = textos_covid, Sentimento = rotulos_sentimento_covid)
 
+# Contadores de Positivo e Negativo
+contador_positivo <- sum(dados_sentimento_covid$Sentimento == "Positivo")
+contador_negativo <- sum(dados_sentimento_covid$Sentimento == "Negativo")
 
-# Remover espaços em branco das extremidades dos textos
-dados_sentimento$TextoOriginal <- trimws(dados_sentimento$TextoOriginal)
-
-# Remover linhas com valores ausentes (NA)
-dados_sentimento <- na.omit(dados_sentimento)
-
-# Visualizar os resultados
-head(dados_sentimento)
-
+# Exibir os resultados
+print(dados_sentimento_covid)
+cat("\nContador Positivo:", contador_positivo, "\n")
+cat("Contador Negativo:", contador_negativo, "\n")
 
 
 ```
