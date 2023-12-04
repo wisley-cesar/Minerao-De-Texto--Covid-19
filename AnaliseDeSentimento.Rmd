@@ -1,0 +1,55 @@
+---
+title: "Análise de sentimento"
+output: html_notebook
+---
+
+```{r}
+# Instale o pacote se ainda não o fez
+
+# Carregue o pacote
+library(readxl)
+
+# Leia o arquivo Excel
+arquivo_path <- "/Users/wisley/Documents/Matéria do 4 periodo /Minereção de Texto /Trabalho Final /Minerao-De-Texto--Covid-19/noticias_categorizadas.xlsx"
+Arquivo_Noticias <- read_excel(arquivo_path)
+
+
+```
+
+
+```{r}
+# Instale e carregue os pacotes
+library(tm)
+library(stringr)
+library(dplyr)
+
+```
+
+
+
+```{r}
+# Crie um corpus usando suas colunas de texto
+corpus <- Corpus(VectorSource(paste(Arquivo_Noticias$URL, Arquivo_Noticias$Covid, Arquivo_Noticias$Cloroquina, Arquivo_Noticias$Hidroxicloroquina, sep = " ")))
+
+```
+
+```{r}
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+
+```
+
+```{r}
+# Se estiver trabalhando com textos em português, use as stopwords em português
+stopwords_pt <- stopwords("portuguese")
+
+# Aplique a remoção de stopwords
+corpus <- tm_map(corpus, removeWords, stopwords_pt)
+```
+
+```{r}
+dtm <- DocumentTermMatrix(corpus)
+
+```
+
