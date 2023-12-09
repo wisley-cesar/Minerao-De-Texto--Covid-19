@@ -3,53 +3,201 @@ title: "Análise de sentimento"
 output: html_notebook
 ---
 
-```{r}
-# Instale o pacote se ainda não o fez
 
-# Carregue o pacote
+
+```{r}
+library(stringr)  
 library(readxl)
-
-# Leia o arquivo Excel
-arquivo_path <- "/Users/wisley/Documents/Matéria do 4 periodo /Minereção de Texto /Trabalho Final /Minerao-De-Texto--Covid-19/noticias_categorizadas.xlsx"
-Arquivo_Noticias <- read_excel(arquivo_path)
-
-
-```
-
-
-```{r}
-# Instale e carregue os pacotes
-library(tm)
-library(stringr)
 library(dplyr)
 
+# Caminho do arquivo Excel
+arquivo_path <- file.path("/Users/wisley/Documents/Matéria do 4 periodo /Minereção de Texto /webscraping/noticias_categorizadas.xlsx")
+
+# Leia o arquivo Excel
+dados_excel <- read_excel(arquivo_path)
+
+# Crie tabelas para cada coluna
+tabela_covid <- data.frame(Texto = dados_excel$Covid)
+tabela_cloroquina <- data.frame(Texto = dados_excel$Cloroquina)
+tabela_hidroxicloroquina <- data.frame(Texto = dados_excel$Hidroxicloroquina)
+
+# Remova os NA de cada tabela
+tabela_covid <- na.omit(tabela_covid)
+tabela_cloroquina <- na.omit(tabela_cloroquina)
+tabela_hidroxicloroquina <- na.omit(tabela_hidroxicloroquina)
+
+
+# Acesse as colunas 'Texto' e armazene os textos em variáveis
+textos_covid <- tabela_covid$Texto
+textos_cloroquina <- tabela_cloroquina$Texto
+textos_hidroxicloroquina <- tabela_hidroxicloroquina$Texto
+
+# Combine todos os textos em uma única variável
+todos_os_textos <- c(textos_covid, textos_cloroquina, textos_hidroxicloroquina)
+
+# Crie uma variável indicando a categoria para cada texto
+categorias <- c(rep("Covid", length(textos_covid)),
+                rep("Cloroquina", length(textos_cloroquina)),
+                rep("Hidroxicloroquina", length(textos_hidroxicloroquina)))
+
+# Combine textos e categorias em um data frame
+dados_completos <- data.frame(Texto = todos_os_textos, Categoria = categorias)
+
+
+
 ```
 
 
-
 ```{r}
-# Crie um corpus usando suas colunas de texto
-corpus <- Corpus(VectorSource(paste(Arquivo_Noticias$URL, Arquivo_Noticias$Covid, Arquivo_Noticias$Cloroquina, Arquivo_Noticias$Hidroxicloroquina, sep = " ")))
+# Crie uma função para o pré-processamento
+preprocessar_texto <- function(texto) {
+  # Converte para minúsculas
+  texto <- tolower(texto)
+  
+  # Remove pontuações
+  texto <- str_replace_all(texto, "[[:punct:]]", " ")
+  
+  # Remove números
+  texto <- str_replace_all(texto, "\\b\\d+\\b", " ")
+  
+  # Remove espaços extras
+  texto <- str_squish(texto)
+  
+  # Adicione outros passos de pré-processamento conforme necessário
+  
+  return(texto)
+}
 
+# Aplique a função de pré-processamento aos textos
+dados_completos$Texto <- sapply(dados_completos$Texto, preprocessar_texto)
+
+# Visualize os textos após o pré-processamento
+head(dados_completos$Texto)
 ```
 
+
 ```{r}
+# Carregue as bibliotecas necessárias
+library(textmineR)
+library(tm)
+
+# Carregue os dados
+corpus <- Corpus(VectorSource(dados_completos$Texto))
+
+# Realize o pré-processamento no Corpus
 corpus <- tm_map(corpus, content_transformer(tolower))
 corpus <- tm_map(corpus, removePunctuation)
 corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("pt"))
+corpus <- tm_map(corpus, stripWhitespace)
 
-```
-
-```{r}
-# Se estiver trabalhando com textos em português, use as stopwords em português
-stopwords_pt <- stopwords("portuguese")
-
-# Aplique a remoção de stopwords
-corpus <- tm_map(corpus, removeWords, stopwords_pt)
-```
-
-```{r}
+# Crie uma matriz termo-documento
 dtm <- DocumentTermMatrix(corpus)
 
+# Converta a matriz termo-documento para um data frame
+matriz_df <- as.data.frame(as.matrix(dtm))
+
+# Calcule a frequência dos termos
+freq_terms <- colSums(matriz_df)
+
+# Ordene os termos por frequência
+freq_terms <- sort(freq_terms, decreasing = TRUE)
+
+# Exiba os termos mais frequentes
+head(freq_terms, 10)
+
 ```
 
+
+
+```{r}
+# Carregue as bibliotecas necessárias
+library(tidytext)
+
+# Função para tokenização
+tokenizar_texto <- function(texto) {
+  tokens <- unnest_tokens(data.frame(Texto = texto), output = token, input = Texto)
+  return(tokens)
+}
+
+# Tokenize o texto combinado
+tokens_completos <- tokenizar_texto(dados_completos$Texto)
+
+# Visualize os tokens resultantes
+head(tokens_completos)
+
+```
+
+```{r}
+# Carregue as bibliotecas necessárias
+library(tidytext)
+
+# Defina uma lista de stopwords padrão para o português
+stopwords_pt <- stopwords("pt")
+
+# Crie uma lista de palavras adicionais que deseja remover
+palavras_a_remover <- c("httpsgglobocomspsaopaulonoticiacidadedespiniciareaberturamasespecialistascriticamcriteriosquepermitemabrandamentomesmocomexpansaodacovidghtml", "httpspiauifolhauolcombrgovernodoriaomitiumilcasosdecovidemsaopaulo", "httpsogloboglobocomsociedadeendurecimentodaquarentenaemsaopaulotimidotardioavaliamespecialistas","httpsogloboglobocomsociedadeendurecimentodaquarentenaemsaopaulotimidotardioavaliamespecialistas","semanascidadesjoão","dia","uol", "zoológico","nãoxvi", "jul", "g", "jun", "nodal", "mar", "imageslegenda", "ido", "foto", "conteúdoseçõesnotíciasbrasilinternacionaleconomiasaúdeciênciatecnologiavídeosnotíciasbrasilinternacionaleconomiasaúdeciênciatecnologiavídeos", "españaaméricaméxicocolombiachileargentinabrasilusabrasilassineooláfaça", "ventacontenidosprisamediacomnewslettersreceba", "t", "m", "httpsjornaluspbrwpcontentuploadspilulafarmaceuticahidroxicloroquinaecloroquinamp", "of", "the", "and", "httpswwwbbccomnewshealth", "wwwthelancetcomactionshowpdfpiis", "httpsgglobocompodcastoassuntonoticiaoassuntocloroquinaestudosusosedisputasghtml", "httpsgglobocombemestarcoronavirusnoticiathelancetpublicanotaderetratacaosobreestudocomcloroquinaehidroxicloroquinaparacovidghtml", "httpswwwthelancetcomjournalslancetarticlepiisfulltextseccestitle", "wwwpebmedcombrlancetenejmretiramdoarestudosrelacionadosacovid", "wwwpebmedcombrhidroxicloroquinanovoestudocommilpacientesnaoencontrabeneficiosparacovid", "httpswwwuolcombrvivabemnoticiasredacaocovidmaiorestudoateagoraapontaquehidroxicloroquinaeineficazhtm
+", "wwwportaldeprefeituracombrestudofrancescomprovaaeficaciadacloroquinaemdospacientestestados", "de", "a", "o", "que", "e", "é", "do", "da", "em", "um", "para", "com", "não", "uma", "os", "no", "se", "na", "por", "mais", "as", "dos", "como", "mas", "ao", "ele", "das", "à", "seu", "sua", "ou", "quando", "muito", "nos", "já", "eu", "também", "só", "pelo", "pela", "até", "isso", "ela", "entre", "depois", "sem", "mesmo", "aos", "seus", "quem", "nas", "me", "esse", "eles", "você", "essa", "num", "nem", "suas", "meu", "às", "minha", "numa", "pelos", "elas", "qual", "nós", "lhe", "deles", "essas", "esses", "pelas", "este", "dele", "tu", "te", "vocês", "vos", "lhes", "meus", "minhas", "teu", "tua", "teus", "tuas", "nosso", "nossa", "nossos", "nossas", "dela", "delas", "esta", "estes", "estas", "aquele", "aquela", "aqueles", "aquelas", "isto", "aquilo", "estou", "está", "estamos", "estão", "estive", "esteve", "estivemos", "estiveram", "estava", "estávamos", "estavam", "estivera", "estivéramos", "esteja", "estejamos", "estejam", "estivesse", "estivéssemos", "estivessem", "estiver", "estivermos", "estiverem", "hei", "há", "havemos", "hão", "houve", "houvemos", "houveram", "houvera", "houvéramos", "haja", "hajamos", "hajam", "houvesse", "houvéssemos", "houvessem", "houver", "houvermos", "houverem", "houverei", "houverá", "houveremos", "houverão", "houveria", "houveríamos", "houveriam", "sou", "somos", "são", "era", "éramos", "eram", "fui", "foi", "fomos", "foram", "fora", "fôramos", "seja", "sejamos", "sejam", "fosse", "fôssemos", "fossem", "for", "formos", "forem", "serei", "será", "seremos", "serão", "seria", "seríamos", "seriam", "tenho", "tem", "temos", "tém", "tinha", "tínhamos", "tinham", "tive", "teve", "tivemos", "tiveram", "tivera", "tivéramos", "tenha", "tenhamos", "tenham", "tivesse", "tivéssemos", "tivessem", "tiver", "tivermos", "tiverem", "faz", "alumni", "cnn")
+
+# Combine as stopwords padrão com as palavras adicionais
+stopwords_a_remover <- c(stopwords_pt, palavras_a_remover)
+
+# Função para tokenização com remoção de stopwords
+tokenizar_texto_sem_stopwords <- function(texto) {
+  tokens <- unnest_tokens(data.frame(Texto = texto), output = token, input = Texto)
+  tokens_sem_stopwords <- anti_join(tokens, data.frame(token = stopwords_a_remover), by = "token")
+  return(tokens_sem_stopwords)
+}
+
+# Tokenize o texto combinado sem stopwords
+tokens_completos_sem_stopwords <- tokenizar_texto_sem_stopwords(dados_completos$Texto)
+
+# Visualize os tokens resultantes
+head(tokens_completos_sem_stopwords)
+
+
+```
+
+
+
+```{r}
+# Adicione a coluna Texto_Limpo ao conjunto de dados original
+dados_completos$Texto_Limpo <- tokens_completos_sem_stopwords$Texto
+
+
+```
+
+
+```{r}
+# Carregue a biblioteca necessária
+library(sentimentr)
+
+# Verifique se 'dados_completos' possui as colunas 'Texto' e 'Categoria'
+if (!all(c("Texto", "Categoria") %in% colnames(dados_completos))) {
+  stop("As colunas 'Texto' e 'Categoria' não foram encontradas em 'dados_completos'.")
+}
+
+# Crie uma função para realizar a análise de sentimento
+analisar_sentimento <- function(texto) {
+  sentimentos <- sentimentr::sentiment(texto, ngram_window = c(1, 2))
+  return(sentimentos$sentiment)
+}
+
+# Aplique a função de análise de sentimento aos textos
+dados_completos$sentimentos <- sapply(dados_completos$Texto, analisar_sentimento)
+
+# Ajuste das condições de classificação
+dados_completos$Classificacao <- ifelse(dados_completos$sentimentos > 0.2, "Muito Positivo",
+                                        ifelse(dados_completos$sentimentos > 0, "Positivo",
+                                               ifelse(dados_completos$sentimentos < -0.2, "Muito Negativo",
+                                                      ifelse(dados_completos$sentimentos < 0, "Negativo", "Neutro"))))
+
+# Visualize os resultados
+head(dados_completos)
+
+```
+```{r}
+ 
+```
+ 
+ 
